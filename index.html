@@ -587,9 +587,31 @@
     const isAr = currentLang === 'ar';
     if (isAr || typeof jspdf === 'undefined') { fallbackPrint(); return; }
     const { jsPDF } = jspdf;
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-    const pageHeight = doc.internal.pageSize.getHeight();
     const L = 20, R = 190, W = 170;
+
+
+    // Measure notes wrap first (text width doesn't depend on page size)
+    const measureDoc = new jsPDF({ unit: 'mm', format: 'a4' });
+    measureDoc.setFont('helvetica', 'normal'); measureDoc.setFontSize(9);
+    let notesLineCount = 0;
+    if (invNotes?.value) {
+      const maxW = W - 4;
+      let lines = [], line = '';
+      invNotes.value.split(' ').forEach(w => { const test = line + ' ' + w; if (measureDoc.getTextWidth(test.trim()) > maxW) { lines.push(line.trim()); line = w; } else { line = test; } });
+      if (line.trim()) lines.push(line.trim());
+      notesLineCount = lines.length;
+    }
+    const itemsCount = Math.min(lineItems.length, 26);
+    let contentHeight = 75 + 10 + itemsCount * 7 + 4 + 10; // header block through total line
+    if (invNotes?.value) contentHeight += 10 + notesLineCount * 4.5;
+    contentHeight += 18; // bottom margin
+
+
+    // Always portrait: never shorter than width*1.2, never taller than real A4
+    const pageHeight = Math.min(Math.max(contentHeight, 210 * 1.2), 297);
+
+
+    const doc = new jsPDF({ unit: 'mm', format: [210, pageHeight] });
     let y = 25;
 
 
@@ -627,7 +649,7 @@
     y += 8;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(26, 26, 26);
     lineItems.forEach((item, i) => {
-      if (y > pageHeight - 20) return;
+      if (y > pageHeight - 25) return;
       const desc = item.description || 'Item'; const amt = formatCurrency(item.amount);
       doc.text(desc, L, y); doc.text(amt, R - doc.getTextWidth(amt), y); y += 7;
       if (i < lineItems.length - 1) { doc.setDrawColor(232, 224, 208); doc.setLineWidth(0.2); doc.line(L, y - 3, R, y - 3); }
