@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>nano invoice | minimal billing</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Cairo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #1a1208;
+      --bg-alt: #0d0a04;
+      --card-bg: #2C1A06;
+      --card-hover: #3D2E1A;
+      --text-primary: #F5ECD7;
+      --text-secondary: #D4C4A8;
+      --text-muted: #A89878;
+      --accent: #C9A84C;
+      --accent-light: #F0C866;
+      --accent-dark: #A88830;
+      --border: rgba(201,168,76,0.25);
+      --border-hover: rgba(201,168,76,0.5);
+      --shadow: rgba(0,0,0,0.4);
+    }
+    [data-theme="light"] {
+      --bg: #f5f0e8;
+      --bg-alt: #faf3e8;
+      --card-bg: #faf3e8;
+      --card-hover: #f0e6d3;
+      --text-primary: #3D2E1A;
+      --text-secondary: #5C4A2E;
+      --text-muted: #8B7355;
+      --accent: #C9A84C;
+      --accent-light: #F0C866;
+      --accent-dark: #A88830;
+      --border: rgba(201,168,76,0.35);
+      --border-hover: rgba(201,168,76,0.6);
+      --shadow: rgba(44,26,6,0.1);
+    }
+    body {
+      background-color: var(--bg);
+      font-family: 'Inter', system-ui, sans-serif;
+      margin: 0;
+      color: var(--text-primary);
+      transition: background-color 0.3s, color 0.3s;
+    }
+    body[dir="rtl"] { font-family: 'Cairo', system-ui, sans-serif; }
+    .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+    .hover-lift:hover { transform: translateY(-2px); box-shadow: 0 12px 24px -8px var(--shadow); }
+    .btn-glow { transition: all 0.2s ease; box-shadow: 0 0 0 0 rgba(201,168,76,0.3); }
+    .btn-glow:hover { box-shadow: 0 0 16px 0 rgba(201,168,76,0.25); transform: scale(1.02); }
+    .card-dark {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      transition: border-color 0.2s, background-color 0.2s;
+    }
+    .card-dark:hover { border-color: var(--border-hover); background-color: var(--card-hover); }
+    input, textarea {
+      background-color: var(--bg);
+      border: 1px solid var(--border);
+      color: var(--text-primary);
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+    input:focus, textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 2px rgba(201,168,76,0.25);
+    }
+    .preview-badge {
+      background: rgba(201,168,76,0.12);
+      color: var(--accent);
+      border-radius: 20px;
+      padding: 0.2rem 0.8rem;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+    hr { border-color: var(--border); }
+    .theme-btn {
+      background: none; border: 1px solid var(--border); border-radius: 50%;
+      width: 36px; height: 36px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; color: var(--text-muted); transition: all 0.2s;
+    }
+    .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .lang-btn {
+      background: none; border: 1px solid transparent; border-radius: 6px;
+      padding: 2px 5px; cursor: pointer; font-size: 16px; line-height: 1;
+      transition: all 0.2s; opacity: 0.5;
+    }
+    .lang-btn.active { opacity: 1; border-color: var(--accent); }
+    .lang-btn:hover { opacity: 0.8; }
+    #invoicePreview, #printInvoice {
+      background: white; color: #1a1a1a; font-size: 13px; line-height: 1.5;
+    }
+    body[dir="rtl"] #invoicePreview { font-family: 'Cairo', sans-serif; }
+    body[dir="rtl"] #printInvoice { font-family: 'Cairo', sans-serif; }
+    #invoicePreview table, #printInvoice table { width: 100%; border-collapse: collapse; }
+    #invoicePreview th { text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; border-bottom: 2px solid #C9A84C; }
+    #invoicePreview td { padding: 8px 10px; border-bottom: 1px solid #e0d5c0; }
+    #printInvoice td { padding: 10px 12px; border-bottom: 1px solid #E8E0D0; font-size: 13px; color: #1a1a1a; }
+    #printInvoice { display: none; width: 794px; padding: 55px 60px; background: white; color: #1a1a1a; font-size: 13px; line-height: 1.5; }
+    @media print {
+      @page { size: A4 portrait; margin: 0; }
+      html, body { height: 1123px; overflow: hidden; }
+      body * { visibility: hidden !important; }
+      #printInvoice, #printInvoice * { visibility: visible !important; }
+      #printInvoice { display: block !important; position: absolute !important; top: 0 !important; left: 0 !important; width: 794px !important; height: 1123px !important; padding: 55px 60px !important; overflow: hidden !important; page-break-inside: avoid !important; page-break-after: avoid !important; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body class="antialiased">
+
+<div class="min-h-screen flex flex-col px-4 md:px-8 lg:px-16 max-w-7xl mx-auto relative">
+
+  <header class="flex items-center justify-between py-6 border-b" style="border-color:var(--border);">
+    <div class="flex items-center gap-2">
+      <i data-lucide="zap" style="color:var(--accent);" class="w-6 h-6"></i>
+      <span class="text-xl font-semibold tracking-tight" style="color:var(--text-primary);">nano<span style="color:var(--accent);">invoice</span></span>
+    </div>
+    <div class="flex items-center gap-3 md:gap-4 text-sm" style="color:var(--text-muted);">
+      <div class="lang-switcher flex gap-1">
+        <button class="lang-btn" data-lang="en" title="English">🇬🇧</button>
+        <button class="lang-btn" data-lang="fr" title="Français">🇫🇷</button>
+        <button class="lang-btn" data-lang="es" title="Español">🇪🇸</button>
+        <button class="lang-btn" data-lang="ar" title="العربية">🇲🇦</button>
+      </div>
+      <span style="color:var(--border);">|</span>
+      <button class="theme-btn" id="themeToggle">☀️</button>
+    </div>
+  </header>
+
+  <section class="flex flex-col items-center text-center mt-8 md:mt-12 mb-6 md:mb-10">
+    <h1 class="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight" style="color:var(--text-primary);">
+      <span data-i18n="hero_title">Invoicing stripped down to the</span> <span style="color:var(--accent);" data-i18n="hero_essentials">essentials</span>.
+    </h1>
+    <p class="mt-3 text-base md:text-lg" style="color:var(--text-secondary);" data-i18n="hero_sub">No accounts, no bloat – just clean, fast billing.</p>
+  </section>
+
+  <section class="mb-16 md:mb-24" id="invoiceSection">
+    <div class="flex items-center gap-3 mb-4">
+      <i data-lucide="edit-3" style="color:var(--accent);" class="w-5 h-5"></i>
+      <h2 class="text-xl font-semibold tracking-tight" style="color:var(--text-primary);" data-i18n="create_title">Create your invoice</h2>
+      <span class="preview-badge">live</span>
+      <button id="demoFillBtn" class="btn-glow text-xs font-medium px-3 py-1.5 rounded-lg transition-colors no-print" style="background:rgba(201,168,76,0.15);color:var(--accent);border:1px solid var(--border);">🎲 <span data-i18n="demo">Demo</span></button>
+    </div>
+
+    <div class="card-dark rounded-2xl p-5 md:p-7 shadow-2xl backdrop-blur-sm">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color:var(--text-muted);" data-i18n="inv_number">Invoice #</label>
+              <input type="text" id="invNumber" value="INV-001" class="w-full px-3 py-2 rounded-lg text-sm">
+            </div>
+            <div>
+              <label class="block text-xs font-medium mb-1" style="color:var(--text-muted);" data-i18n="date">Date</label>
+              <input type="date" id="invDate" class="w-full px-3 py-2 rounded-lg text-sm">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color:var(--text-muted);" data-i18n="from_label">From (your business)</label>
+            <input type="text" id="businessName" placeholder="" value="Alex Rivera" class="w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color:var(--text-muted);" data-i18n="client_label">Client name</label>
+            <input type="text" id="clientName" placeholder="" value="Stellar Labs" class="w-full px-3 py-2 rounded-lg text-sm">
+          </div>
+          <div class="border-t pt-4" style="border-color:var(--border);">
+            <p class="text-xs font-semibold mb-2 flex items-center gap-1" style="color:var(--text-secondary);"><i data-lucide="list" class="w-3.5 h-3.5"></i> <span data-i18n="line_items">Line items</span></p>
+            <div id="lineItemsContainer" class="space-y-2"></div>
+            <button id="addLineBtn" class="mt-2 text-xs flex items-center gap-1 transition-colors" style="color:var(--accent);">
+              <i data-lucide="plus-circle" class="w-4 h-4"></i> <span data-i18n="add_item">Add item</span>
+            </button>
+          </div>
+          <div>
+            <label class="block text-xs font-medium mb-1" style="color:var(--text-muted);" data-i18n="notes_label">Notes (optional)</label>
+            <textarea id="invNotes" rows="2" placeholder="" class="w-full px-3 py-2 rounded-lg text-sm"></textarea>
+          </div>
+          <button id="downloadBtn" class="btn-glow font-semibold px-5 py-3 rounded-lg text-sm flex items-center justify-center gap-2 w-full transition-colors no-print" style="background:var(--accent);color:var(--bg-alt);">
+            <i data-lucide="download" class="w-4 h-4"></i> <span data-i18n="download_pdf">Download PDF</span>
+          </button>
+        </div>
+
+        <div id="printArea">
+          <div id="invoicePreview" class="rounded-xl p-6" style="min-height:500px;">
+            <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:24px;">
+              <div>
+                <div style="font-size:22px;font-weight:800;color:#C9A84C;">nano<span style="color:#1a1a1a;">invoice</span></div>
+                <div style="font-size:11px;color:#8B7355;margin-top:2px;"><span id="piDocType" data-i18n="doc_type">INVOICE</span></div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:16px;font-weight:700;color:#1a1a1a;" id="piNumber">INV-001</div>
+                <div style="font-size:12px;color:#8B7355;" id="piDate"></div>
+              </div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-bottom:24px;">
+              <div>
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8B7355;margin-bottom:4px;"><span id="piFromLabel" data-i18n="from">FROM</span></div>
+                <div style="font-size:14px;font-weight:600;color:#1a1a1a;" id="piBusiness">Alex Rivera</div>
+              </div>
+              <div style="text-align:right;">
+                <div style="font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:#8B7355;margin-bottom:4px;"><span id="piToLabel" data-i18n="bill_to">BILL TO</span></div>
+                <div style="font-size:14px;font-weight:600;color:#1a1a1a;" id="piClient">Stellar Labs</div>
+              </div>
+            </div>
+            <table>
+                <thead>
+                  <tr><th style="width:65%;"><span id="piDescLabel" data-i18n="description">Description</span></th><th style="width:35%;text-align:right;"><span id="piAmtLabel" data-i18n="amount">Amount</span></th></tr>
+              </thead>
+              <tbody id="piItems"></tbody>
+            </table>
+            <div style="margin-top:16px;text-align:right;font-size:18px;font-weight:700;color:#1a1a1a;">
+              <span id="piTotalLabel" data-i18n="total">Total</span>: <span id="piTotal">$0.00</span>
+            </div>
+            <div id="piNotes" style="margin-top:20px;font-size:11px;color:#8B7355;border-top:1px solid #e0d5c0;padding-top:12px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div id="printInvoice"></div>
+
+  <section class="mb-16 md:mb-24">
+    <h2 class="text-2xl md:text-3xl font-bold mb-8 flex items-center gap-2" style="color:var(--text-primary);">
+      <i data-lucide="sparkles" style="color:var(--accent);" class="w-7 h-7"></i> <span data-i18n="why_title">Why nano?</span>
+    </h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div class="card-dark rounded-xl p-6 hover-lift flex flex-col items-start">
+        <div class="p-3 rounded-lg mb-5" style="background:rgba(201,168,76,0.1);"><i data-lucide="zap" style="color:var(--accent);" class="w-7 h-7"></i></div>
+        <h3 class="text-xl font-semibold mb-2" style="color:var(--text-primary);" data-i18n="fast_title">Lightning Fast</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text-muted);" data-i18n="fast_desc">No account required. Generate an invoice before your coffee gets cold.</p>
+      </div>
+      <div class="card-dark rounded-xl p-6 hover-lift flex flex-col items-start">
+        <div class="p-3 rounded-lg mb-5" style="background:rgba(201,168,76,0.1);"><i data-lucide="code-2" style="color:var(--accent);" class="w-7 h-7"></i></div>
+        <h3 class="text-xl font-semibold mb-2" style="color:var(--text-primary);" data-i18n="dev_title">Developer Friendly</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text-muted);" data-i18n="dev_desc">Simple JSON export/import. Built for your workflow.</p>
+      </div>
+      <div class="card-dark rounded-xl p-6 hover-lift flex flex-col items-start">
+        <div class="p-3 rounded-lg mb-5" style="background:rgba(201,168,76,0.1);"><i data-lucide="shield" style="color:var(--accent);" class="w-7 h-7"></i></div>
+        <h3 class="text-xl font-semibold mb-2" style="color:var(--text-primary);" data-i18n="priv_title">Privacy First</h3>
+        <p class="text-sm leading-relaxed" style="color:var(--text-muted);" data-i18n="priv_desc">All data stays in your browser. No databases, no trackers.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="mb-16 md:mb-24 text-center">
+    <div class="max-w-2xl mx-auto card-dark rounded-2xl p-8 md:p-10">
+      <span class="text-xs font-bold px-4 py-1.5 rounded-full" style="background:rgba(201,168,76,0.15);color:var(--accent);" data-i18n="pricing_badge">Pricing</span>
+      <h2 class="text-3xl md:text-4xl font-bold mt-4" style="color:var(--text-primary);" data-i18n="pricing_title">100% Free & Open Source</h2>
+      <p class="mt-3 max-w-lg mx-auto text-sm md:text-base" style="color:var(--text-secondary);" data-i18n="pricing_desc">No hidden fees, no premium plans. Just a lightweight tool for the community.</p>
+      <div class="mt-6 flex flex-wrap items-center justify-center gap-4">
+        <a href="#" class="btn-glow inline-flex items-center gap-2 font-semibold px-6 py-3 rounded-lg transition" style="background:var(--accent);color:var(--bg-alt);">
+          <i data-lucide="github" class="w-5 h-5"></i> <span data-i18n="star_github">Star on GitHub</span>
+        </a>
+        <span class="text-sm flex items-center gap-1" style="color:var(--text-muted);"><i data-lucide="heart" style="color:#ef4444;" class="w-4 h-4"></i> MIT License</span>
+      </div>
+    </div>
+  </section>
+
+  <footer class="border-t py-8 mt-auto" style="border-color:var(--border);">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm" style="color:var(--text-muted);">
+      <div class="flex gap-6">
+        <a href="#" class="transition-colors" style="color:var(--text-muted);" data-i18n="privacy">Privacy</a>
+        <a href="#" class="transition-colors" style="color:var(--text-muted);" data-i18n="terms">Terms</a>
+        <a href="#" class="transition-colors" style="color:var(--text-muted);" data-i18n="contact">Contact</a>
+      </div>
+      <div class="flex items-center gap-2" style="color:var(--text-muted);">
+        <i data-lucide="code" class="w-4 h-4"></i> <span data-i18n="footer_tag">Built by developers, for creators</span>
+      </div>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function() {
+  const I18N = {
+    en: {
+      hero_title: 'Invoicing stripped down to the', hero_essentials: 'essentials', hero_sub: 'No accounts, no bloat \u2013 just clean, fast billing.',
+      create_title: 'Create your invoice', demo: 'Demo', inv_number: 'Invoice #', date: 'Date',
+      from_label: 'From (your business)', client_label: 'Client name', line_items: 'Line items',
+      add_item: 'Add item', notes_label: 'Notes (optional)', download_pdf: 'Download PDF',
+      doc_type: 'INVOICE', from: 'FROM', bill_to: 'BILL TO', description: 'Description', amount: 'Amount', total: 'Total',
+      why_title: 'Why nano?', fast_title: 'Lightning Fast', fast_desc: 'No account required. Generate an invoice before your coffee gets cold.',
+      dev_title: 'Developer Friendly', dev_desc: 'Simple JSON export/import. Built for your workflow.',
+      priv_title: 'Privacy First', priv_desc: 'All data stays in your browser. No databases, no trackers.',
+      pricing_badge: 'Pricing', pricing_title: '100% Free & Open Source',
+      pricing_desc: 'No hidden fees, no premium plans. Just a lightweight tool for the community.',
+      star_github: 'Star on GitHub', privacy: 'Privacy', terms: 'Terms', contact: 'Contact',
+      footer_tag: 'Built by developers, for creators',
+      desc_placeholder: 'Service description', item_placeholder: 'New item',
+      notes_placeholder: 'Payment terms, thank you note...',
+      your_name: 'Your name', client_placeholder: 'Client name',
+      demo_client: 'Acme Corp', demo_business: 'Jane Smith', demo_inv: 'INV-2026-001',
+      demo_notes: 'Payment due within 15 days. Thank you for your business!',
+      demo_item1: 'UI/UX Design', demo_item2: 'Frontend Development', demo_item3: 'SEO Audit',
+      alert_min: 'Keep at least one line item.'
+    },
+    fr: {
+      hero_title: 'La facturation à l\'', hero_essentials: 'essentiel', hero_sub: 'Pas de compte, pas de fioritures \u2013 juste une facturation propre et rapide.',
+      create_title: 'Créez votre facture', demo: 'Démo', inv_number: 'Facture #', date: 'Date',
+      from_label: 'De (votre entreprise)', client_label: 'Nom du client', line_items: 'Prestations',
+      add_item: 'Ajouter', notes_label: 'Notes (optionnel)', download_pdf: 'Télécharger PDF',
+      doc_type: 'FACTURE', from: 'DE', bill_to: 'FACTURER À', description: 'Description', amount: 'Montant', total: 'Total',
+      why_title: 'Pourquoi nano ?', fast_title: 'Rapide', fast_desc: 'Créez une facture avant que votre café refroidisse.',
+      dev_title: 'Pour développeurs', dev_desc: 'Export/Import JSON. Conçu pour votre workflow.',
+      priv_title: 'Vie privée', priv_desc: 'Toutes les données restent dans votre navigateur.',
+      pricing_badge: 'Tarifs', pricing_title: '100% Gratuit & Open Source',
+      pricing_desc: 'Pas de frais cachés. Un outil léger pour la communauté.',
+      star_github: 'Star sur GitHub', privacy: 'Confidentialité', terms: 'CGU', contact: 'Contact',
+      footer_tag: 'Construit par des développeurs, pour des créateurs',
+      desc_placeholder: 'Description du service', item_placeholder: 'Nouvelle prestation',
+      notes_placeholder: 'Conditions de paiement, remerciements...',
+      your_name: 'Votre nom', client_placeholder: 'Nom du client',
+      demo_client: 'Acme Corp', demo_business: 'Jean Dupont', demo_inv: 'FAC-2026-001',
+      demo_notes: 'Paiement sous 15 jours. Merci pour votre confiance !',
+      demo_item1: 'Design UI/UX', demo_item2: 'Développement Frontend', demo_item3: 'Audit SEO',
+      alert_min: 'Gardez au moins une prestation.'
+    },
+    es: {
+      hero_title: 'Facturación reducida a lo', hero_essentials: 'esencial', hero_sub: 'Sin cuentas, sin rodeos \u2013 solo facturación limpia y rápida.',
+      create_title: 'Crea tu factura', demo: 'Demo', inv_number: 'Factura #', date: 'Fecha',
+      from_label: 'De (tu negocio)', client_label: 'Nombre del cliente', line_items: 'Servicios',
+      add_item: 'Añadir', notes_label: 'Notas (opcional)', download_pdf: 'Descargar PDF',
+      doc_type: 'FACTURA', from: 'DE', bill_to: 'FACTURAR A', description: 'Descripción', amount: 'Importe', total: 'Total',
+      why_title: '¿Por qué nano?', fast_title: 'Rápido', fast_desc: 'Crea una factura antes de que se enfríe tu café.',
+      dev_title: 'Para desarrolladores', dev_desc: 'Export/Import JSON. Hecho para tu flujo de trabajo.',
+      priv_title: 'Privacidad', priv_desc: 'Todos los datos se quedan en tu navegador.',
+      pricing_badge: 'Precios', pricing_title: '100% Gratis & Open Source',
+      pricing_desc: 'Sin costes ocultos. Una herramienta ligera para la comunidad.',
+      star_github: 'Star en GitHub', privacy: 'Privacidad', terms: 'Términos', contact: 'Contacto',
+      footer_tag: 'Construido por desarrolladores, para creadores',
+      desc_placeholder: 'Descripción del servicio', item_placeholder: 'Nuevo servicio',
+      notes_placeholder: 'Términos de pago, nota de agradecimiento...',
+      your_name: 'Tu nombre', client_placeholder: 'Nombre del cliente',
+      demo_client: 'Acme Corp', demo_business: 'María García', demo_inv: 'FAC-2026-001',
+      demo_notes: 'Pago a 15 días. ¡Gracias por tu confianza!',
+      demo_item1: 'Diseño UI/UX', demo_item2: 'Desarrollo Frontend', demo_item3: 'Auditoría SEO',
+      alert_min: 'Mantén al menos un servicio.'
+    },
+    ar: {
+      hero_title: 'الفواتير مختصرة إلى', hero_essentials: 'الأساسيات', hero_sub: 'لا حسابات، لا تعقيد – فقط فواتير نظيفة وسريعة.',
+      create_title: 'إنشاء فاتورتك', demo: 'تجريبي', inv_number: 'الفاتورة #', date: 'التاريخ',
+      from_label: 'من (نشاطك التجاري)', client_label: 'اسم العميل', line_items: 'البنود',
+      add_item: 'إضافة بند', notes_label: 'ملاحظات (اختياري)', download_pdf: 'تحميل PDF',
+      doc_type: 'فاتورة', from: 'من', bill_to: 'الفاتورة إلى', description: 'الوصف', amount: 'المبلغ', total: 'المجموع',
+      why_title: 'لماذا نانو؟', fast_title: 'سريع', fast_desc: 'لا حاجة لحساب. أنشئ فاتورة قبل أن يبرد قهوتك.',
+      dev_title: 'صديق المطورين', dev_desc: 'تصدير/استيراد JSON. مصمم لسير عملك.',
+      priv_title: 'الخصوصية أولاً', priv_desc: 'جميع البيانات تبقى في متصفحك. لا قواعد بيانات ولا متتبعات.',
+      pricing_badge: 'التسعير', pricing_title: 'مجاني 100% ومفتوح المصدر',
+      pricing_desc: 'لا رسوم خفية، لا خطط مدفوعة. مجرد أداة خفيفة للمجتمع.',
+      star_github: 'نجمة على GitHub', privacy: 'الخصوصية', terms: 'الشروط', contact: 'اتصل بنا',
+      footer_tag: 'بُني بواسطة مطورين، للمبدعين',
+      desc_placeholder: 'وصف الخدمة', item_placeholder: 'بند جديد',
+      notes_placeholder: 'شروط الدفع، ملاحظة شكر...',
+      your_name: 'اسمك', client_placeholder: 'اسم العميل',
+      demo_client: 'أكسي كورب', demo_business: 'أحمد السعيدي', demo_inv: 'FAC-2026-001',
+      demo_notes: 'الدفع خلال 15 يوماً. شكراً لتعاملكم!',
+      demo_item1: 'تصميم واجهات UX/UI', demo_item2: 'تطوير الواجهات الأمامية', demo_item3: 'تدقيق SEO',
+      alert_min: 'يجب إبقاء بند واحد على الأقل.'
+    }
+  };
+
+  let currentLang = localStorage.getItem('nanoinvoice_lang') || 'en';
+
+  function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.en[key]) || key; }
+
+  function setTitleTooltips() {
+    const flags = { en:'🇬🇧', fr:'🇫🇷', es:'🇪🇸', ar:'🇲🇦' };
+    const langs = ['en','fr','es','ar'];
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.dataset.i18n;
+      const parts = [];
+      for (const l of langs) {
+        const txt = I18N[l]?.[key];
+        if (txt) parts.push((l === currentLang ? '→ ' : '') + flags[l] + ' ' + txt);
+      }
+      el.title = parts.join('  |  ');
+    });
+  }
+
+  function applyLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('nanoinvoice_lang', lang);
+    const isAr = lang === 'ar';
+    document.documentElement.lang = lang;
+    document.documentElement.dir = isAr ? 'rtl' : 'ltr';
+    document.body.dir = isAr ? 'rtl' : 'ltr';
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
+    document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
+    // Update placeholders
+    document.querySelectorAll('.desc-input').forEach(el => el.placeholder = t('desc_placeholder'));
+    document.getElementById('invNotes').placeholder = t('notes_placeholder');
+    document.getElementById('businessName').placeholder = t('your_name');
+    document.getElementById('clientName').placeholder = t('client_placeholder');
+    // Update invoice preview labels
+    const piDocType = document.getElementById('piDocType');
+    if (piDocType) piDocType.textContent = t('doc_type');
+    const piFromLabel = document.getElementById('piFromLabel');
+    if (piFromLabel) piFromLabel.textContent = t('from');
+    const piToLabel = document.getElementById('piToLabel');
+    if (piToLabel) piToLabel.textContent = t('bill_to');
+    const piDescLabel = document.getElementById('piDescLabel');
+    if (piDescLabel) piDescLabel.textContent = t('description');
+    const piAmtLabel = document.getElementById('piAmtLabel');
+    if (piAmtLabel) piAmtLabel.textContent = t('amount');
+    const piTotalLabel = document.getElementById('piTotalLabel');
+    if (piTotalLabel) piTotalLabel.textContent = t('total');
+    // Update demo button text
+    const demoBtn = document.getElementById('demoFillBtn');
+    if (demoBtn) demoBtn.innerHTML = '🎲 <span data-i18n="demo">' + t('demo') + '</span>';
+    // Update download button
+    const downloadBtn = document.getElementById('downloadBtn');
+    if (downloadBtn) downloadBtn.innerHTML = '<i data-lucide="download" class="w-4 h-4"></i> <span data-i18n="download_pdf">' + t('download_pdf') + '</span>';
+    // Update add item button
+    const addBtnEl = document.getElementById('addLineBtn');
+    if (addBtnEl) addBtnEl.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4"></i> <span data-i18n="add_item">' + t('add_item') + '</span>';
+    lucide.createIcons();
+    setTitleTooltips();
+  }
+
+  // Theme
+  const themeToggle = document.getElementById('themeToggle');
+  const currentTheme = localStorage.getItem('nanoinvoice_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', currentTheme);
+  themeToggle.textContent = currentTheme === 'dark' ? '☀️' : '🌙';
+  themeToggle.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    themeToggle.textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('nanoinvoice_theme', next);
+  });
+
+  // Lang switcher
+  document.querySelectorAll('.lang-btn').forEach(b => {
+    b.addEventListener('click', () => applyLang(b.dataset.lang));
+  });
+
+  let lineItems = [{ id: 1, description: 'Website redesign', amount: 1200.00 }];
+
+  const container = document.getElementById('lineItemsContainer');
+  const addBtn = document.getElementById('addLineBtn');
+  const clientInput = document.getElementById('clientName');
+  const businessInput = document.getElementById('businessName');
+
+  function formatCurrency(value) { return '$' + parseFloat(value).toFixed(2); }
+
+  function renderAll() { renderLineInputs(); updatePreview(); }
+
+  function renderLineInputs() {
+    if (!container) return;
+    container.innerHTML = '';
+    lineItems.forEach((item, index) => {
+      const div = document.createElement('div');
+      div.className = 'flex items-center gap-2';
+      div.innerHTML = '<input type="text" placeholder="' + t('desc_placeholder') + '" value="' + item.description.replace(/"/g,'&quot;') + '" class="flex-1 px-3 py-2 rounded-lg text-sm desc-input" data-index="' + index + '"><input type="number" step="0.01" min="0" value="' + item.amount + '" class="w-28 px-3 py-2 rounded-lg text-sm amount-input" data-index="' + index + '"><button class="remove-btn p-1 transition" data-index="' + index + '" style="color:var(--text-muted);"><i data-lucide="trash-2" class="w-4 h-4"></i></button>';
+      container.appendChild(div);
+    });
+    document.querySelectorAll('.desc-input').forEach(input => {
+      input.addEventListener('input', function(e) {
+        const idx = parseInt(e.target.getAttribute('data-index'));
+        if (!isNaN(idx) && lineItems[idx]) { lineItems[idx].description = e.target.value; updatePreview(); }
+      });
+    });
+    document.querySelectorAll('.amount-input').forEach(input => {
+      input.addEventListener('input', function(e) {
+        const idx = parseInt(e.target.getAttribute('data-index'));
+        let val = parseFloat(e.target.value); if (isNaN(val)) val = 0;
+        if (!isNaN(idx) && lineItems[idx]) { lineItems[idx].amount = val; updatePreview(); }
+      });
+    });
+    document.querySelectorAll('.remove-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        const idx = parseInt(e.currentTarget.getAttribute('data-index'));
+        if (!isNaN(idx) && lineItems.length > 1) { lineItems.splice(idx, 1); renderAll(); }
+        else if (lineItems.length <= 1) { alert(t('alert_min')); }
+        lucide.createIcons();
+      });
+    });
+    lucide.createIcons();
+  }
+
+  function updatePreview() {}
+
+  addBtn?.addEventListener('click', () => {
+    const newId = lineItems.length ? Math.max(...lineItems.map(i => i.id)) + 1 : 1;
+    lineItems.push({ id: newId, description: t('item_placeholder'), amount: 0 });
+    renderAll();
+  });
+
+  const invNumber = document.getElementById('invNumber');
+  const invDate = document.getElementById('invDate');
+  const invNotes = document.getElementById('invNotes');
+  const piNumber = document.getElementById('piNumber');
+  const piDate = document.getElementById('piDate');
+  const piBusiness = document.getElementById('piBusiness');
+  const piClient = document.getElementById('piClient');
+  const piItems = document.getElementById('piItems');
+  const piTotal = document.getElementById('piTotal');
+  const piNotesEl = document.getElementById('piNotes');
+
+  invDate.value = new Date().toISOString().slice(0,10);
+
+  function updateInvoicePreview() {
+    piNumber.textContent = invNumber?.value || 'INV-001';
+    piDate.textContent = invDate?.value ? new Date(invDate.value).toLocaleDateString(currentLang === 'ar' ? 'ar-MA' : currentLang === 'fr' ? 'fr-FR' : currentLang === 'es' ? 'es-ES' : 'en-US', { year:'numeric', month:'long', day:'numeric' }) : '';
+    piBusiness.textContent = businessInput?.value || t('your_name');
+    piClient.textContent = clientInput?.value || t('client_placeholder');
+    piItems.innerHTML = '';
+    lineItems.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + (item.description || 'Item') + '</td><td style="text-align:right;">' + formatCurrency(item.amount) + '</td>';
+      piItems.appendChild(tr);
+    });
+    const total = lineItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    piTotal.textContent = formatCurrency(total);
+    piNotesEl.textContent = invNotes?.value || '';
+    piNotesEl.style.display = invNotes?.value ? '' : 'none';
+  }
+
+  const origUpdate = updatePreview;
+  updatePreview = function() { origUpdate(); updateInvoicePreview(); };
+
+  invNumber?.addEventListener('input', updateInvoicePreview);
+  invDate?.addEventListener('input', updateInvoicePreview);
+  invNotes?.addEventListener('input', updateInvoicePreview);
+
+  function buildPrintInvoice() {
+    const total = lineItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    const isAr = currentLang === 'ar';
+    const itemRows = lineItems.map(item => '<tr><td>' + (item.description || 'Item') + '</td><td style="text-align:right;">' + formatCurrency(item.amount) + '</td></tr>').join('');
+    const notesHtml = (invNotes?.value || '') ? '<div style="margin-top:24px;font-size:11px;color:#6B5B4E;border-top:2px solid #C9A84C;padding-top:14px;line-height:1.6;">' + invNotes.value + '</div>' : '';
+    document.getElementById('printInvoice').innerHTML = '<div style="font-family:' + (isAr ? 'Cairo' : 'Inter') + ',sans-serif;border-bottom:3px solid #C9A84C;padding-bottom:18px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:end;"><div><div style="font-size:28px;font-weight:900;color:#C9A84C;letter-spacing:-0.5px;line-height:1;">nano<span style="color:#1a1a1a;">invoice</span></div><div style="font-size:10px;color:#A89878;text-transform:uppercase;letter-spacing:2px;margin-top:4px;">' + t('doc_type') + '</div></div><div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:#1a1a1a;">' + (invNumber?.value || 'INV-001') + '</div><div style="font-size:12px;color:#8B7355;margin-top:2px;">' + (invDate?.value ? new Date(invDate.value).toLocaleDateString(isAr ? 'ar-MA' : currentLang === 'fr' ? 'fr-FR' : currentLang === 'es' ? 'es-ES' : 'en-US', { year:'numeric', month:'long', day:'numeric' }) : '') + '</div></div></div><div style="display:flex;justify-content:space-between;margin-bottom:32px;"><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#A89878;margin-bottom:6px;">' + t('from') + '</div><div style="font-size:15px;font-weight:700;color:#1a1a1a;">' + (businessInput?.value || t('your_name')) + '</div></div><div style="text-align:' + (isAr ? 'left' : 'right') + ';"><div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#A89878;margin-bottom:6px;">' + t('bill_to') + '</div><div style="font-size:15px;font-weight:700;color:#1a1a1a;">' + (clientInput?.value || t('client_placeholder')) + '</div></div></div><table><thead><tr style="background:#F5F0E8;"><th style="width:65%;padding:10px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6B5B4E;border:none;">' + t('description') + '</th><th style="width:35%;padding:10px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6B5B4E;text-align:right;border:none;">' + t('amount') + '</th></tr></thead><tbody>' + itemRows + '</tbody></table><div style="margin-top:20px;text-align:right;border-top:2px solid #C9A84C;padding-top:14px;"><span style="font-size:13px;color:#6B5B4E;font-weight:600;text-transform:uppercase;letter-spacing:1px;">' + t('total') + '&nbsp;</span><span style="font-size:22px;font-weight:900;color:#1a1a1a;">' + formatCurrency(total) + '</span></div>' + notesHtml + '</div>';
+  }
+
+  document.getElementById('demoFillBtn')?.addEventListener('click', () => {
+    const isAr = currentLang === 'ar';
+    clientInput.value = t('demo_client');
+    businessInput.value = t('demo_business');
+    document.getElementById('invNumber').value = t('demo_inv');
+    document.getElementById('invDate').value = new Date().toISOString().slice(0,10);
+    document.getElementById('invNotes').value = t('demo_notes');
+    lineItems = [
+      { id: 1, description: t('demo_item1'), amount: 2400 },
+      { id: 2, description: t('demo_item2'), amount: 3600 },
+      { id: 3, description: t('demo_item3'), amount: 800 }
+    ];
+    renderAll();
+  });
+
+  document.getElementById('downloadBtn')?.addEventListener('click', () => {
+    const isAr = currentLang === 'ar';
+    if (isAr || typeof jspdf === 'undefined') { fallbackPrint(); return; }
+    const { jsPDF } = jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const L = 20, R = 190, W = 170;
+    let y = 25;
+
+    doc.setDrawColor(201, 168, 76); doc.setLineWidth(0.8); doc.line(L, y, R, y);
+    doc.setFillColor(201, 168, 76); doc.rect(L, y - 0.5, W, 1, 'F');
+    y += 8;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
+    doc.setTextColor(201, 168, 76); doc.text('nano', L, y);
+    doc.setTextColor(26, 26, 26); doc.text('invoice', L + doc.getTextWidth('nano'), y);
+    y += 5;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor(168, 152, 120);
+    doc.text(t('doc_type'), L, y);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(26, 26, 26);
+    const invNum = invNumber?.value || 'INV-001';
+    doc.text(invNum, R - doc.getTextWidth(invNum), 33);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(139, 115, 85);
+    const d = invDate?.value ? new Date(invDate.value).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) : '';
+    if (d) doc.text(d, R - doc.getTextWidth(d), 39);
+    doc.setDrawColor(201, 168, 76); doc.setLineWidth(0.5); doc.line(L, y + 10, R, y + 10);
+    y = 55;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(168, 152, 120);
+    doc.text(t('from'), L, 55);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(26, 26, 26);
+    doc.text(businessInput?.value || t('your_name'), L, 62);
+    const billTo = clientInput?.value || t('client_placeholder');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(7); doc.setTextColor(168, 152, 120);
+    doc.text(t('bill_to'), R - doc.getTextWidth(t('bill_to')), 55);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor(26, 26, 26);
+    doc.text(billTo, R - doc.getTextWidth(billTo), 62);
+    y = 75;
+    doc.setFillColor(245, 240, 232); doc.rect(L, y - 4, W, 7, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(107, 91, 78);
+    doc.text(t('description'), L, y + 1);
+    doc.text(t('amount'), R - doc.getTextWidth(t('amount')), y + 1);
+    y += 8;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(26, 26, 26);
+    lineItems.forEach((item, i) => {
+      if (y > 265) return;
+      const desc = item.description || 'Item'; const amt = formatCurrency(item.amount);
+      doc.text(desc, L, y); doc.text(amt, R - doc.getTextWidth(amt), y); y += 7;
+      if (i < lineItems.length - 1) { doc.setDrawColor(232, 224, 208); doc.setLineWidth(0.2); doc.line(L, y - 3, R, y - 3); }
+    });
+    y = Math.max(y + 4, 85 + lineItems.length * 7 + 4);
+    doc.setDrawColor(201, 168, 76); doc.setLineWidth(0.8); doc.line(L, y, R, y); y += 4;
+    const total = lineItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(107, 91, 78);
+    doc.text(t('total'), L, y);
+    doc.setFontSize(18); doc.setTextColor(26, 26, 26);
+    const totalStr = formatCurrency(total);
+    doc.text(totalStr, R - doc.getTextWidth(totalStr), y);
+    if (invNotes?.value) {
+      y += 10; doc.setDrawColor(201, 168, 76); doc.setLineWidth(0.5); doc.line(L, y, R, y); y += 4;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(107, 91, 78);
+      const notes = invNotes.value; const maxW = W - 4;
+      let lines = [], line = '';
+      notes.split(' ').forEach(w => { const test = line + ' ' + w; if (doc.getTextWidth(test.trim()) > maxW) { lines.push(line.trim()); line = w; } else { line = test; } });
+      if (line.trim()) lines.push(line.trim());
+      lines.forEach(l => { doc.text(l, L, y); y += 4.5; });
+    }
+    doc.save((businessInput?.value || 'invoice').replace(/\s+/g, '_') + '.pdf');
+  });
+
+  function fallbackPrint() { buildPrintInvoice(); setTimeout(() => window.print(), 50); setTimeout(() => { document.getElementById('printInvoice').innerHTML = ''; }, 1000); }
+
+  clientInput?.addEventListener('input', updatePreview);
+  businessInput?.addEventListener('input', updatePreview);
+
+  applyLang(currentLang);
+  renderAll();
+
+  window.addEventListener('load', () => { lucide.createIcons(); });
+})();
+</script>
+</body>
+</html>
