@@ -466,7 +466,8 @@
   const businessInput = document.getElementById('businessName');
 
 
-  function formatCurrency(value) { return '$' + parseFloat(value).toFixed(2); }
+  const currencyFmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+  function formatCurrency(value) { return currencyFmt.format(value); }
 
 
   function renderAll() { renderLineInputs(); updatePreview(); }
@@ -607,8 +608,8 @@
     contentHeight += 18; // bottom margin
 
 
-    // Always portrait: never shorter than width*1.2, never taller than real A4
-    const pageHeight = Math.min(Math.max(contentHeight, 210 * 1.2), 297);
+    // Cap at A4 height — no minimum floor, avoids empty space
+    const pageHeight = Math.min(contentHeight, 297);
 
 
     const doc = new jsPDF({ unit: 'mm', format: [210, pageHeight] });
@@ -655,7 +656,7 @@
       if (i < lineItems.length - 1) { doc.setDrawColor(232, 224, 208); doc.setLineWidth(0.2); doc.line(L, y - 3, R, y - 3); }
     });
     y = Math.max(y + 4, 85 + lineItems.length * 7 + 4);
-    doc.setDrawColor(201, 168, 76); doc.setLineWidth(0.8); doc.line(L, y, R, y); y += 4;
+    doc.setDrawColor(201, 168, 76); doc.setLineWidth(0.8); doc.line(L, y, R, y); y += 10;
     const total = lineItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
     doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(107, 91, 78);
     doc.text(t('total'), L, y);
