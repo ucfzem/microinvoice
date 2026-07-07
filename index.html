@@ -103,47 +103,34 @@
     #invoicePreview th { text-align: left; padding: 8px 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; border-bottom: 2px solid #C9A84C; }
     #invoicePreview td { padding: 8px 10px; border-bottom: 1px solid #e0d5c0; }
     #printInvoice { display: none; }
-    #printInvoice .pi-wrap { font-family:'Helvetica Neue',Helvetica,Arial,sans-serif; width:210mm; min-height:297mm; padding:20mm; background:#fff; color:#000; box-sizing:border-box; position:relative; font-size:12px; line-height:1.5; }
-    #printInvoice .pi-wrap h3 { font-size:14px; color:#333; margin:0 0 10px 0; }
-    #printInvoice .pi-wrap p { margin:2px 0; color:#555; }
-    #printInvoice .pi-wrap .name { font-weight:700; color:#000; font-size:13px; margin-bottom:5px; }
-    #printInvoice .pi-header { display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:30px; border-bottom:2px solid #C49F4F; margin-bottom:40px; }
-    #printInvoice .pi-logo { font-size:28px; font-weight:700; color:#000; }
-    #printInvoice .pi-logo span { color:#C49F4F; }
-    #printInvoice .pi-doctype { font-size:12px; margin-top:5px; color:#555; text-transform:uppercase; }
-    #printInvoice .pi-meta { display:flex; flex-direction:column; gap:10px; }
-    #printInvoice .pi-meta-item { display:flex; background:#f2f2f2; padding:8px 12px; min-width:220px; }
-    #printInvoice .pi-meta-label { flex:1; font-size:11px; font-weight:700; color:#333; }
-    #printInvoice .pi-meta-value { font-size:12px; color:#000; }
-    #printInvoice .pi-contacts { display:flex; justify-content:space-between; margin-bottom:40px; }
-    #printInvoice .pi-contacts > div { width:48%; }
-    #printInvoice .pi-sender h3 { color:#C49F4F; }
-    #printInvoice .pi-table { width:100%; border-collapse:collapse; margin-bottom:40px; }
-    #printInvoice .pi-table thead { background:#C49F4F; }
-    #printInvoice .pi-table th { color:#fff; text-align:left; padding:10px; font-size:11px; text-transform:uppercase; border:none; }
-    #printInvoice .pi-table th.amt { text-align:right; width:120px; }
-    #printInvoice .pi-table td { padding:10px; border:1px solid #ddd; font-size:12px; color:#000; }
-    #printInvoice .pi-table td:first-child { border-left:none; }
-    #printInvoice .pi-table td:last-child { border-right:none; }
-    #printInvoice .pi-table td.amt { text-align:right; }
-    #printInvoice .pi-totals { display:flex; justify-content:flex-end; margin-bottom:60px; }
-    #printInvoice .pi-totals-inner { width:300px; }
-    #printInvoice .pi-total-row { display:flex; justify-content:space-between; padding:5px 0; font-size:12px; }
-    #printInvoice .pi-total-row .lbl { font-weight:700; color:#333; }
-    #printInvoice .pi-total-row .val { text-align:right; color:#000; }
-    #printInvoice .pi-total-row.main { border-top:1px solid #ddd; margin-top:10px; padding-top:10px; font-size:14px; }
-    #printInvoice .pi-grand { position:absolute; bottom:130px; right:20mm; width:250px; display:flex; justify-content:space-between; align-items:center; }
-    #printInvoice .pi-grand .lbl { font-size:16px; font-weight:700; color:#000; }
-    #printInvoice .pi-grand .val { font-size:24px; font-weight:700; color:#000; }
-    #printInvoice .pi-footer { position:absolute; bottom:20mm; left:20mm; right:20mm; border-top:2px solid #C49F4F; padding-top:20px; text-align:center; }
-    #printInvoice .pi-footer .thanks { font-size:13px; font-weight:700; color:#000; margin-bottom:15px; }
-    #printInvoice .pi-footer .legal { font-size:10px; color:#555; margin:2px 0; }
-    @page { size: A4 portrait; margin: 0; }
+    #printInvoice * { box-sizing: border-box; }
+    #printInvoice .pi-box { font-family: Arial, Helvetica, sans-serif; color: #333; width: 100%; max-width: 18cm; margin: 0 auto; font-size: 12pt; line-height: 1.4; background: #fff; }
+    #printInvoice .pi-box .logo span { color: #c9a961; font-weight: bold; }
+    #printInvoice .pi-box .logo { font-size: 22pt; font-weight: bold; }
+    #printInvoice .pi-header { display: flex; justify-content: space-between; align-items: flex-start; border-top: 3px solid #c9a961; border-bottom: 3px solid #c9a961; padding: 12px 0; margin-bottom: 20px; }
+    #printInvoice .pi-doctype { font-size: 9pt; color: #888; margin-top: 2px; text-transform: uppercase; }
+    #printInvoice .pi-meta { text-align: right; }
+    #printInvoice .pi-meta .val { font-weight: bold; font-size: 14pt; }
+    #printInvoice .pi-meta .lbl { font-size: 10pt; color: #888; }
+    #printInvoice .pi-contacts { display: flex; justify-content: space-between; margin-bottom: 25px; }
+    #printInvoice .pi-contacts h3 { font-size: 9pt; color: #888; margin: 0 0 4px 0; text-transform: uppercase; font-weight: normal; }
+    #printInvoice .pi-contacts .name { font-weight: bold; font-size: 12pt; }
+    #printInvoice .pi-contacts p { margin: 0; }
+    #printInvoice .pi-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+    #printInvoice .pi-table thead { background: #f5f0e6; }
+    #printInvoice .pi-table th { text-align: left; padding: 8px 6px; font-size: 10pt; color: #666; font-weight: normal; }
+    #printInvoice .pi-table td { padding: 8px 6px; border-bottom: 1px solid #eee; }
+    #printInvoice .pi-table .amt { text-align: right; }
+    #printInvoice .pi-table th.amt { text-align: right; }
+    #printInvoice .pi-grand { border-top: 3px solid #c9a961; border-bottom: 3px solid #c9a961; padding: 10px 0; display: flex; justify-content: space-between; font-size: 14pt; font-weight: bold; margin-bottom: 20px; }
+    #printInvoice .pi-footer { font-size: 10pt; color: #666; margin-top: 10px; }
+    #printInvoice .pi-footer p { margin: 0; }
+    @page { size: A4 portrait; margin: 1.5cm; }
     @media print {
-      html, body { height: 297mm; overflow: hidden; }
+      html, body { height: 297mm; overflow: hidden; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       body * { visibility: hidden !important; }
       #printInvoice, #printInvoice * { visibility: visible !important; }
-      #printInvoice { display: block !important; position: absolute !important; top: 0 !important; left: 0 !important; width: 210mm !important; height: 297mm !important; padding: 0 !important; overflow: hidden !important; }
+      #printInvoice { display: block !important; position: absolute !important; top: 0 !important; left: 0 !important; width: 100% !important; padding: 0 !important; }
       .no-print { display: none !important; }
     }
   </style>
@@ -600,27 +587,20 @@
     const itemRows = lineItems.map(item =>
       '<tr><td>' + (item.description || 'Item') + '</td><td class="amt">' + fmt(item.amount) + '</td></tr>'
     ).join('');
-    const emptyRows = Math.max(0, 4 - lineItems.length);
-    for (let i = 0; i < emptyRows; i++) itemRows += '<tr><td>&nbsp;</td><td class="amt"></td></tr>';
     const notesText = invNotes?.value || '';
     document.getElementById('printInvoice').innerHTML =
-      '<div class="pi-wrap">'
+      '<div class="pi-box">'
       + '<div class="pi-header">'
-      + '<div><div class="pi-logo"><span>nano</span>invoice</div><div class="pi-doctype">' + t('doc_type') + '</div></div>'
-      + '<div class="pi-meta">'
-      + '<div class="pi-meta-item"><span class="pi-meta-label">' + t('inv_number') + '</span><span class="pi-meta-value">' + (invNumber?.value || 'INV-001') + '</span></div>'
-      + '<div class="pi-meta-item"><span class="pi-meta-label">' + t('date') + '</span><span class="pi-meta-value">' + dateStr + '</span></div>'
-      + '</div></div>'
+      + '<div><div class="logo"><span>nano</span>invoice</div><div class="pi-doctype">' + t('doc_type') + '</div></div>'
+      + '<div class="pi-meta"><div class="val">' + (invNumber?.value || 'INV-001') + '</div><div class="lbl">' + dateStr + '</div></div>'
+      + '</div>'
       + '<div class="pi-contacts">'
-      + '<div class="pi-sender"><h3>' + t('from') + '</h3><p class="name">' + (businessInput?.value || '') + '</p><p>' + (businessInput?.value || '') + '</p></div>'
-      + '<div><h3>' + t('bill_to') + '</h3><p class="name">' + (clientInput?.value || '') + '</p><p>' + (clientInput?.value || '') + '</p></div>'
+      + '<div><h3>' + t('from') + '</h3><p class="name">' + (businessInput?.value || '') + '</p></div>'
+      + '<div><h3>' + t('bill_to') + '</h3><p class="name">' + (clientInput?.value || '') + '</p></div>'
       + '</div>'
       + '<table class="pi-table"><thead><tr><th>' + t('description') + '</th><th class="amt">' + t('amount') + '</th></tr></thead><tbody>' + itemRows + '</tbody></table>'
-      + '<div class="pi-totals"><div class="pi-totals-inner">'
-      + '<div class="pi-total-row main"><span class="lbl">' + t('total') + '</span><span class="val">' + fmt(total) + '</span></div>'
-      + '</div></div>'
-      + '<div class="pi-grand"><span class="lbl">' + t('total') + '</span><span class="val">' + fmt(total) + '</span></div>'
-      + (notesText ? '<div class="pi-footer"><p class="thanks">' + notesText + '</p></div>' : '')
+      + '<div class="pi-grand"><span>' + t('total') + '</span><span>' + fmt(total) + '</span></div>'
+      + (notesText ? '<div class="pi-footer"><p>' + notesText + '</p></div>' : '')
       + '</div>';
   }
 
