@@ -1,5 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
@@ -93,7 +92,10 @@
     .lang-btn.active { opacity: 1; border-color: var(--accent); }
     .lang-btn:hover { opacity: 0.8; }
     #invoicePreview, #printInvoice {
-      background: white; color: #1a1a1a; font-size: 13px; line-height: 1.5;
+      color-scheme: light only;
+      background: #ffffff !important;
+      color: #1a1a1a !important;
+      font-size: 13px; line-height: 1.5;
     }
     body[dir="rtl"] #invoicePreview { font-family: 'Cairo', sans-serif; }
     body[dir="rtl"] #printInvoice { font-family: 'Cairo', sans-serif; }
@@ -114,7 +116,9 @@
 </head>
 <body class="antialiased">
 
+
 <div class="min-h-screen flex flex-col px-4 md:px-8 lg:px-16 max-w-7xl mx-auto relative">
+
 
   <header class="flex items-center justify-between py-6 border-b" style="border-color:var(--border);">
     <div class="flex items-center gap-2">
@@ -133,12 +137,14 @@
     </div>
   </header>
 
+
   <section class="flex flex-col items-center text-center mt-8 md:mt-12 mb-6 md:mb-10">
     <h1 class="text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight leading-tight" style="color:var(--text-primary);">
       <span data-i18n="hero_title">Invoicing stripped down to the</span> <span style="color:var(--accent);" data-i18n="hero_essentials">essentials</span>.
     </h1>
     <p class="mt-3 text-base md:text-lg" style="color:var(--text-secondary);" data-i18n="hero_sub">No accounts, no bloat – just clean, fast billing.</p>
   </section>
+
 
   <section class="mb-16 md:mb-24" id="invoiceSection">
     <div class="flex items-center gap-3 mb-4">
@@ -147,6 +153,7 @@
       <span class="preview-badge">live</span>
       <button id="demoFillBtn" class="btn-glow text-xs font-medium px-3 py-1.5 rounded-lg transition-colors no-print" style="background:rgba(201,168,76,0.15);color:var(--accent);border:1px solid var(--border);">🎲 <span data-i18n="demo">Demo</span></button>
     </div>
+
 
     <div class="card-dark rounded-2xl p-5 md:p-7 shadow-2xl backdrop-blur-sm">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -185,8 +192,12 @@
           </button>
         </div>
 
-        <div id="printArea">
-          <div id="invoicePreview" class="rounded-xl p-6" style="min-height:500px;">
+
+        <div id="printArea" style="width:100%; overflow:hidden;">
+          <div id="printAreaScaler" style="width:100%; position:relative;">
+            <div id="invoicePreview" class="rounded-xl"
+                 style="width:794px; padding:55px 60px; box-sizing:border-box;
+                        position:absolute; top:0; left:0; transform-origin:top left;">
             <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:24px;">
               <div>
                 <div style="font-size:22px;font-weight:800;color:#C9A84C;">nano<span style="color:#1a1a1a;">invoice</span></div>
@@ -218,12 +229,15 @@
             </div>
             <div id="piNotes" style="margin-top:20px;font-size:11px;color:#8B7355;border-top:1px solid #e0d5c0;padding-top:12px;"></div>
           </div>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
+
   <div id="printInvoice"></div>
+
 
   <section class="mb-16 md:mb-24">
     <h2 class="text-2xl md:text-3xl font-bold mb-8 flex items-center gap-2" style="color:var(--text-primary);">
@@ -248,6 +262,7 @@
     </div>
   </section>
 
+
   <section class="mb-16 md:mb-24 text-center">
     <div class="max-w-2xl mx-auto card-dark rounded-2xl p-8 md:p-10">
       <span class="text-xs font-bold px-4 py-1.5 rounded-full" style="background:rgba(201,168,76,0.15);color:var(--accent);" data-i18n="pricing_badge">Pricing</span>
@@ -262,6 +277,7 @@
     </div>
   </section>
 
+
   <footer class="border-t py-8 mt-auto" style="border-color:var(--border);">
     <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm" style="color:var(--text-muted);">
       <div class="flex gap-6">
@@ -275,6 +291,7 @@
     </div>
   </footer>
 </div>
+
 
 <script>
 (function() {
@@ -365,9 +382,12 @@
     }
   };
 
+
   let currentLang = localStorage.getItem('nanoinvoice_lang') || 'en';
 
+
   function t(key) { return (I18N[currentLang] && I18N[currentLang][key]) || (I18N.en[key]) || key; }
+
 
   function setTitleTooltips() {
     const flags = { en:'🇬🇧', fr:'🇫🇷', es:'🇪🇸', ar:'🇲🇦' };
@@ -383,6 +403,7 @@
     });
   }
 
+
   function applyLang(lang) {
     currentLang = lang;
     localStorage.setItem('nanoinvoice_lang', lang);
@@ -392,12 +413,10 @@
     document.body.dir = isAr ? 'rtl' : 'ltr';
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.dataset.lang === lang));
     document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = t(el.dataset.i18n));
-    // Update placeholders
     document.querySelectorAll('.desc-input').forEach(el => el.placeholder = t('desc_placeholder'));
     document.getElementById('invNotes').placeholder = t('notes_placeholder');
     document.getElementById('businessName').placeholder = t('your_name');
     document.getElementById('clientName').placeholder = t('client_placeholder');
-    // Update invoice preview labels
     const piDocType = document.getElementById('piDocType');
     if (piDocType) piDocType.textContent = t('doc_type');
     const piFromLabel = document.getElementById('piFromLabel');
@@ -410,20 +429,17 @@
     if (piAmtLabel) piAmtLabel.textContent = t('amount');
     const piTotalLabel = document.getElementById('piTotalLabel');
     if (piTotalLabel) piTotalLabel.textContent = t('total');
-    // Update demo button text
     const demoBtn = document.getElementById('demoFillBtn');
     if (demoBtn) demoBtn.innerHTML = '🎲 <span data-i18n="demo">' + t('demo') + '</span>';
-    // Update download button
     const downloadBtn = document.getElementById('downloadBtn');
     if (downloadBtn) downloadBtn.innerHTML = '<i data-lucide="download" class="w-4 h-4"></i> <span data-i18n="download_pdf">' + t('download_pdf') + '</span>';
-    // Update add item button
     const addBtnEl = document.getElementById('addLineBtn');
     if (addBtnEl) addBtnEl.innerHTML = '<i data-lucide="plus-circle" class="w-4 h-4"></i> <span data-i18n="add_item">' + t('add_item') + '</span>';
     lucide.createIcons();
     setTitleTooltips();
   }
 
-  // Theme
+
   const themeToggle = document.getElementById('themeToggle');
   const currentTheme = localStorage.getItem('nanoinvoice_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', currentTheme);
@@ -435,21 +451,26 @@
     localStorage.setItem('nanoinvoice_theme', next);
   });
 
-  // Lang switcher
+
   document.querySelectorAll('.lang-btn').forEach(b => {
     b.addEventListener('click', () => applyLang(b.dataset.lang));
   });
 
+
   let lineItems = [{ id: 1, description: 'Website redesign', amount: 1200.00 }];
+
 
   const container = document.getElementById('lineItemsContainer');
   const addBtn = document.getElementById('addLineBtn');
   const clientInput = document.getElementById('clientName');
   const businessInput = document.getElementById('businessName');
 
+
   function formatCurrency(value) { return '$' + parseFloat(value).toFixed(2); }
 
+
   function renderAll() { renderLineInputs(); updatePreview(); }
+
 
   function renderLineInputs() {
     if (!container) return;
@@ -484,13 +505,16 @@
     lucide.createIcons();
   }
 
+
   function updatePreview() {}
+
 
   addBtn?.addEventListener('click', () => {
     const newId = lineItems.length ? Math.max(...lineItems.map(i => i.id)) + 1 : 1;
     lineItems.push({ id: newId, description: t('item_placeholder'), amount: 0 });
     renderAll();
   });
+
 
   const invNumber = document.getElementById('invNumber');
   const invDate = document.getElementById('invDate');
@@ -503,7 +527,9 @@
   const piTotal = document.getElementById('piTotal');
   const piNotesEl = document.getElementById('piNotes');
 
+
   invDate.value = new Date().toISOString().slice(0,10);
+
 
   function updateInvoicePreview() {
     piNumber.textContent = invNumber?.value || 'INV-001';
@@ -522,12 +548,15 @@
     piNotesEl.style.display = invNotes?.value ? '' : 'none';
   }
 
+
   const origUpdate = updatePreview;
-  updatePreview = function() { origUpdate(); updateInvoicePreview(); };
+  updatePreview = function() { origUpdate(); updateInvoicePreview(); scaleInvoicePreview(); };
+
 
   invNumber?.addEventListener('input', updateInvoicePreview);
   invDate?.addEventListener('input', updateInvoicePreview);
   invNotes?.addEventListener('input', updateInvoicePreview);
+
 
   function buildPrintInvoice() {
     const total = lineItems.reduce((sum, item) => sum + (Number(item.amount) || 0), 0);
@@ -536,6 +565,7 @@
     const notesHtml = (invNotes?.value || '') ? '<div style="margin-top:24px;font-size:11px;color:#6B5B4E;border-top:2px solid #C9A84C;padding-top:14px;line-height:1.6;">' + invNotes.value + '</div>' : '';
     document.getElementById('printInvoice').innerHTML = '<div style="font-family:' + (isAr ? 'Cairo' : 'Inter') + ',sans-serif;border-bottom:3px solid #C9A84C;padding-bottom:18px;margin-bottom:28px;display:flex;justify-content:space-between;align-items:end;"><div><div style="font-size:28px;font-weight:900;color:#C9A84C;letter-spacing:-0.5px;line-height:1;">nano<span style="color:#1a1a1a;">invoice</span></div><div style="font-size:10px;color:#A89878;text-transform:uppercase;letter-spacing:2px;margin-top:4px;">' + t('doc_type') + '</div></div><div style="text-align:right;"><div style="font-size:18px;font-weight:800;color:#1a1a1a;">' + (invNumber?.value || 'INV-001') + '</div><div style="font-size:12px;color:#8B7355;margin-top:2px;">' + (invDate?.value ? new Date(invDate.value).toLocaleDateString(isAr ? 'ar-MA' : currentLang === 'fr' ? 'fr-FR' : currentLang === 'es' ? 'es-ES' : 'en-US', { year:'numeric', month:'long', day:'numeric' }) : '') + '</div></div></div><div style="display:flex;justify-content:space-between;margin-bottom:32px;"><div><div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#A89878;margin-bottom:6px;">' + t('from') + '</div><div style="font-size:15px;font-weight:700;color:#1a1a1a;">' + (businessInput?.value || t('your_name')) + '</div></div><div style="text-align:' + (isAr ? 'left' : 'right') + ';"><div style="font-size:9px;text-transform:uppercase;letter-spacing:1.5px;color:#A89878;margin-bottom:6px;">' + t('bill_to') + '</div><div style="font-size:15px;font-weight:700;color:#1a1a1a;">' + (clientInput?.value || t('client_placeholder')) + '</div></div></div><table><thead><tr style="background:#F5F0E8;"><th style="width:65%;padding:10px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6B5B4E;border:none;">' + t('description') + '</th><th style="width:35%;padding:10px 12px;font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#6B5B4E;text-align:right;border:none;">' + t('amount') + '</th></tr></thead><tbody>' + itemRows + '</tbody></table><div style="margin-top:20px;text-align:right;border-top:2px solid #C9A84C;padding-top:14px;"><span style="font-size:13px;color:#6B5B4E;font-weight:600;text-transform:uppercase;letter-spacing:1px;">' + t('total') + '&nbsp;</span><span style="font-size:22px;font-weight:900;color:#1a1a1a;">' + formatCurrency(total) + '</span></div>' + notesHtml + '</div>';
   }
+
 
   document.getElementById('demoFillBtn')?.addEventListener('click', () => {
     const isAr = currentLang === 'ar';
@@ -552,6 +582,7 @@
     renderAll();
   });
 
+
   document.getElementById('downloadBtn')?.addEventListener('click', () => {
     const isAr = currentLang === 'ar';
     if (isAr || typeof jspdf === 'undefined') { fallbackPrint(); return; }
@@ -559,6 +590,7 @@
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
     const L = 20, R = 190, W = 170;
     let y = 25;
+
 
     doc.setDrawColor(201, 168, 76); doc.setLineWidth(0.8); doc.line(L, y, R, y);
     doc.setFillColor(201, 168, 76); doc.rect(L, y - 0.5, W, 1, 'F');
@@ -619,13 +651,31 @@
     doc.save((businessInput?.value || 'invoice').replace(/\s+/g, '_') + '.pdf');
   });
 
+
   function fallbackPrint() { buildPrintInvoice(); setTimeout(() => window.print(), 50); setTimeout(() => { document.getElementById('printInvoice').innerHTML = ''; }, 1000); }
+
 
   clientInput?.addEventListener('input', updatePreview);
   businessInput?.addEventListener('input', updatePreview);
 
+
+  function scaleInvoicePreview() {
+    const scaler = document.getElementById('printAreaScaler');
+    const preview = document.getElementById('invoicePreview');
+    if (!scaler || !preview) return;
+    const scale = scaler.clientWidth / 794;
+    preview.style.transform = 'scale(' + scale + ')';
+    scaler.style.height = (preview.offsetHeight * scale) + 'px';
+  }
+  window.addEventListener('resize', scaleInvoicePreview);
+  window.addEventListener('load', scaleInvoicePreview);
+
+
   applyLang(currentLang);
   renderAll();
+  scaleInvoicePreview();
+  setTimeout(scaleInvoicePreview, 50);
+
 
   window.addEventListener('load', () => { lucide.createIcons(); });
 })();
