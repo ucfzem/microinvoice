@@ -622,9 +622,91 @@
 
 
   document.getElementById('downloadBtn')?.addEventListener('click', () => {
-    buildPrintInvoice();
-    setTimeout(() => window.print(), 50);
-    setTimeout(() => { document.getElementById('printInvoice').innerHTML = ''; }, 1000);
+    const { jsPDF } = jspdf;
+    const doc = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+    const L = 20, R = 190, W = 170;
+    const gold = [201, 169, 97];
+    const gray = [245, 240, 230];
+    const dark = [51, 51, 51];
+    let y = 25;
+
+    // Gold top border
+    doc.setDrawColor(...gold); doc.setLineWidth(1.5); doc.line(L, y, R, y); y += 3;
+
+    // Header: logo + meta
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22);
+    doc.setTextColor(...gold); doc.text('nano', L, y + 2);
+    doc.setTextColor(0, 0, 0); doc.text('invoice', L + doc.getTextWidth('nano'), y + 2);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(136, 136, 136);
+    doc.text(t('doc_type'), L, y + 8);
+
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(0, 0, 0);
+    const invNum = invNumber?.value || 'INV-001';
+    doc.text(invNum, R - doc.getTextWidth(invNum), y + 2);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(136, 136, 136);
+    const d = invDate?.value ? new Date(invDate.value).toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' }) : '';
+    if (d) doc.text(d, R - doc.getTextWidth(d), y + 8);
+
+    y += 16;
+    // Gold bottom border
+    doc.setDrawColor(...gold); doc.setLineWidth(1.5); doc.line(L, y, R, y); y += 12;
+
+    // Contacts
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(136, 136, 136);
+    doc.text(t('from'), L, y);
+    doc.text(t('bill_to'), R - doc.getTextWidth(t('bill_to')), y);
+    y += 5;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor(0, 0, 0);
+    doc.text(businessInput?.value || '', L, y);
+    const billTo = clientInput?.value || '';
+    doc.text(billTo, R - doc.getTextWidth(billTo), y);
+    y += 14;
+
+    // Table header
+    doc.setFillColor(...gray); doc.rect(L, y - 4, W, 7, 'F');
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(102, 102, 102);
+    doc.text(t('description'), L, y + 1);
+    doc.text(t('amount'), R - doc.getTextWidth(t('amount')), y + 1);
+    y += 8;
+
+    // Table rows
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(0, 0, 0);
+    const maxY = 270;
+    lineItems.forEach((item, i) => {
+      if (y > maxY) return;
+      const desc = item.description || 'Item';
+      const amt = localeFmt.format(item.amount);
+      doc.text(desc, L, y);
+      doc.text(amt, R - doc.getTextWidth(amt), y);
+      y += 7;
+      doc.setDrawColor(238, 238, 238); doc.setLineWidth(0.2);
+      if (i < lineItems.length - 1) doc.line(L, y - 4, R, y - 4);
+    });
+    y += 4;
+
+    // Grand total
+    const total = lineItems.reduce((s, item) => s + (Number(item.amount) || 0), 0);
+    doc.setDrawColor(...gold); doc.setLineWidth(1.5); doc.line(L, y, R, y); y += 3;
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text(t('total'), L, y + 4);
+    const totalStr = localeFmt.format(total);
+    doc.text(totalStr, R - doc.getTextWidth(totalStr), y + 4);
+    y += 10;
+    doc.setDrawColor(...gold); doc.setLineWidth(1.5); doc.line(L, y, R, y);
+
+    // Notes
+    if (invNotes?.value) {
+      y += 8;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(102, 102, 102);
+      const notes = invNotes.value; const maxW = W - 4;
+      let lines = [], line = '';
+      notes.split(' ').forEach(w => { const test = line + ' ' + w; if (doc.getTextWidth(test.trim()) > maxW) { lines.push(line.trim()); line = w; } else { line = test; } });
+      if (line.trim()) lines.push(line.trim());
+      lines.forEach(l => { doc.text(l, L, y); y += 4.5; });
+    }
+
+    doc.save((businessInput?.value || 'invoice').replace(/\s+/g, '_') + '.pdf');
   });
 
 
