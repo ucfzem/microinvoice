@@ -588,6 +588,7 @@
     if (isAr || typeof jspdf === 'undefined') { fallbackPrint(); return; }
     const { jsPDF } = jspdf;
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+    const pageHeight = doc.internal.pageSize.getHeight();
     const L = 20, R = 190, W = 170;
     let y = 25;
 
@@ -626,7 +627,7 @@
     y += 8;
     doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(26, 26, 26);
     lineItems.forEach((item, i) => {
-      if (y > 265) return;
+      if (y > pageHeight - 20) return;
       const desc = item.description || 'Item'; const amt = formatCurrency(item.amount);
       doc.text(desc, L, y); doc.text(amt, R - doc.getTextWidth(amt), y); y += 7;
       if (i < lineItems.length - 1) { doc.setDrawColor(232, 224, 208); doc.setLineWidth(0.2); doc.line(L, y - 3, R, y - 3); }
